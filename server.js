@@ -6,7 +6,7 @@
  *
  * Name: __Mohammadhossein Sobhanmanesh__ Student ID: __116523200__ Date: __2022-03-22__
  *
- * Online (Heroku) Link: 
+ * Online (Heroku) Link: https://ancient-dusk-67003.herokuapp.com/blog
  *
  ********************************************************************************/
 
@@ -57,6 +57,12 @@ app.engine(
       safeHTML: function (context) {
         return stripJs(context);
       },
+      formatDate: function(dateObj){
+        let year = dateObj.getFullYear();
+        let month = (dateObj.getMonth() + 1).toString();
+        let day = dateObj.getDate().toString();
+        return `${year}-${month.padStart(2, '0')}-${day.padStart(2,'0')}`;
+        }
     },
   })
 );
