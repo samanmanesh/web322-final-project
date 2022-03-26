@@ -4,7 +4,7 @@
  * of this assignment has been copied manually or electronically from any other source
  * (including 3rd party web sites) or distributed to other students.
  *
- * Name: __Mohammadhossein Sobhanmanesh__ Student ID: __116523200__ Date: __2022-03-22__
+ * Name: __Mohammadhossein Sobhanmanesh__ Student ID: __116523200__ Date: __2022-03-26__
  *
  * Online (Heroku) Link: https://ancient-dusk-67003.herokuapp.com/blog
  *
@@ -57,12 +57,17 @@ app.engine(
       safeHTML: function (context) {
         return stripJs(context);
       },
-      formatDate: function(dateObj){
+      formatDate: function (dateObj) {
         let year = dateObj.getFullYear();
-        let month = (dateObj.getMonth() + 1).toString();
+        let month = (
+          dateObj.getMonth() + 1
+        ).toString();
         let day = dateObj.getDate().toString();
-        return `${year}-${month.padStart(2, '0')}-${day.padStart(2,'0')}`;
-        }
+        return `${year}-${month.padStart(
+          2,
+          "0"
+        )}-${day.padStart(2, "0")}`;
+      },
     },
   })
 );
@@ -80,6 +85,7 @@ const upload = multer(); // no {storage:storage} since we are not using diskStor
 //Middleware
 app.use(express.static("public"));
 // app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true }));
 
 app.use(function (req, res, next) {
   let route = req.path.substring(1);
@@ -232,8 +238,13 @@ app.get("/posts", (req, res) => {
     blogService
       .getPostsByMinDate(minDate)
       .then((posts) => {
-        // res.status(200).send(posts);
-        res.render("posts", { posts: posts });
+        if (posts.length > 0) {
+          res.render("posts", { posts: posts });
+        } else {
+          res.render("posts", {
+            message: "no results",
+          });
+        }
       })
       .catch((err) => {
         res
@@ -248,9 +259,15 @@ app.get("/posts", (req, res) => {
       .getPostsByCategory(category)
       .then((posts) => {
         // res.status(200).send(posts);
-        res
-          .status(200)
-          .render("posts", { posts: posts });
+        if (posts.length > 0) {
+          res
+            .status(200)
+            .render("posts", { posts: posts });
+        } else {
+          res.render("posts", {
+            message: "no results",
+          });
+        }
       })
       .catch((err) => {
         res
@@ -265,9 +282,15 @@ app.get("/posts", (req, res) => {
       .getAllPosts()
       .then((posts) => {
         // res.status(200).send(posts);
-        res
-          .status(200)
-          .render("posts", { posts: posts });
+        if (posts.length > 0) {
+          res
+            .status(200)
+            .render("posts", { posts: posts });
+        } else {
+          res.render("posts", {
+            message: "no results",
+          });
+        }
       })
       .catch((err) => {
         res
@@ -285,9 +308,15 @@ app.get("/categories", (req, res) => {
     .getCategories()
     .then((categories) => {
       // res.status(200).send(categories);
-      res.status(200).render("categories", {
-        categories: categories,
-      });
+      if (categories.length > 0) {
+        res.status(200).render("categories", {
+          categories: categories,
+        });
+      } else {
+        res.render("categories", {
+          message: "no results",
+        });
+      }
     })
     .catch((err) => {
       // res.sendStatus(500).send({ message: err });
@@ -301,9 +330,24 @@ app.get("/posts/add", (req, res) => {
   // res.sendFile(
   //   path.join(__dirname, "/views/addPost.html")
   // );
-  res.render("addPost", {
-    //  use the default Layout (main.hbs)
-  });
+
+  // res.render("addPost", {
+  //   //  use the default Layout (main.hbs)
+  // });
+
+  blogService
+    .getCategories()
+    .then((categories) => {
+      res.render("addPost", {
+        //  use the default Layout (main.hbs)
+        categories: categories,
+      });
+    })
+    .catch((err) => {
+      res.render("addPost", {
+        categories: [],
+      });
+    });
 });
 
 app.post(
@@ -349,6 +393,65 @@ app.post(
     }
   }
 );
+
+app.get("/categories/add", (req, res) => {
+  res.render("addCategory", {
+    //  use the default Layout (main.hbs)
+  });
+});
+
+app.post("/categories/add", (req, res) => {
+  blogService
+    .addCategory(req.body)
+    .then((category) => {
+      res.redirect("/categories");
+    })
+    .catch((err) => {
+      res.sendStatus(500).send({ message: err });
+    });
+});
+
+app.get("/categories/delete/:id", (req, res) => {
+  blogService
+    .deleteCategoryById(req.params.id)
+    .then((category) => {
+      res.redirect("/categories");
+    })
+    .catch((err) => {
+      res.sendStatus(500).send({
+        message:
+          "Unable to Remove Category / Category not found)",
+      });
+    });
+});
+
+app.get("/posts/delete/:id", (req, res) => {
+  blogService
+    .deletePostById(req.params.id)
+    .then((post) => {
+      res.redirect("/posts");
+    })
+    .catch((err) => {
+      res.sendStatus(500).send({
+        message:
+          "Unable to Remove Post / Post not found)",
+      });
+    });
+});
+
+app.get("/post/delete/:id", (req, res) => {
+  blogService
+    .deletePostById(req.params.id)
+    .then((post) => {
+      res.redirect("/posts");
+    })
+    .catch((err) => {
+      res.sendStatus(500).send({
+        message:
+          "Unable to Remove Post / Post not found)",
+      });
+    });
+});
 
 app.use((req, res) => {
   // res.status(404).send("404: Page not found");

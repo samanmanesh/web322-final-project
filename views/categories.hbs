@@ -1,6 +1,8 @@
 <div class="row">
   <div class="col-md-12">
-    <h2>Categories</h2>
+    <h2>Categories
+      <a href="/categories/add" class="btn btn-success pull-right">Add Category</a>
+    </h2>
     <hr />
     <div class="table-responsive">
       <table class="table">
@@ -23,6 +25,10 @@
                   {{category}}
                 </a>
               </td>
+              <td>
+                <a href="/categories/delete/{{id}}" class="btn btn-primary">remove</a>
+              </td>
+              
             </tr>
           {{/each}}
         </tbody>
