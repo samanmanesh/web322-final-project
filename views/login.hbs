@@ -1,12 +1,14 @@
-<form method="post" action="/login"></form>
-
-<div class="container" >
+<div class="container">
+  {{#if errorMessage}}
+    <div class="alert alert- danger">
+      <strong>Error:</strong>
+      {{errorMessage}}</div>
+  {{/if}}
   <div class="row">
     <div class="col-md-12">
       <h2>Log In</h2>
 
-      
-      <hr>
+      <hr />
       <form method="post" action="/login">
 
         <fieldset>
@@ -23,7 +25,7 @@
                   required
                 />
               </div>
-            </div> 
+            </div>
           </div>
           <div class="row">
             <div class="col-md-12">
@@ -31,7 +33,7 @@
 
                 <input
                   class="form-control"
-                  id="userName"
+                  id="password"
                   name="password"
                   type="text"
                   placeholder="Password"
@@ -41,7 +43,7 @@
             </div>
           </div>
         </fieldset>
-        
+
         <input
           type="submit"
           class="btn btn-Success pull-right"

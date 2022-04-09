@@ -71,30 +71,38 @@ module.exports.registerUser = (userData) => {
 };
 
 module.exports.checkUser = (userData) => {
+  console.log("check" ,userData);
   return new Promise((resolve, reject) => {
     if (
       !userData.userName ||
       !userData.password
     ) {
+      
       reject("missing username or password");
     }
+
+
     User.find(
       { userName: userData.userName },
       (err, users) => {
         if (err) {
+          console.log("check 2");
           reject(`Unable to find user: ${userData.userName}`);
+          
+        }
+          console.log("users", users);
+        if (users.length === 0) {
+          
+          console.log("check 3");
+          reject(`Unable to find user: ${userData.userName}`);
+          
+          console.log("check 12");
         }
 
-        if (users.length === 0) {
-          reject(
-            "Unable to find user: " +
-              userData.userName
-          );
-        }
-        
         if (
           users[0].password !== userData.password
         ) {
+          console.log("check 4");
           reject(
             "Incorrect Password for user: " +
               userData.userName
@@ -105,6 +113,8 @@ module.exports.checkUser = (userData) => {
             userData.userName &&
           users[0].password === userData.password
         ) {
+          console.log("check 13");
+
           users[0].loginHistory.push({
             dateTime: new Date().toString(),
             userAgent: userData.userAgent,
@@ -120,6 +130,7 @@ module.exports.checkUser = (userData) => {
             },
             (err, users) => {
               if (err) {
+                console.log("check 5");
                 reject(
                   `There was an error verifying the user: ${err}`
                 );
@@ -127,8 +138,11 @@ module.exports.checkUser = (userData) => {
               resolve(users[0]);
             }
           );
+          console.log("check 6");
         }
       }
     );
+    console.log("check 7");
   });
+
 };

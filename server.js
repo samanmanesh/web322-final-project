@@ -29,6 +29,7 @@ const clientSessions = require("client-sessions");
 const {
   render,
 } = require("express/lib/response");
+const res = require("express/lib/response");
 
 app.engine(
   ".hbs",
@@ -521,8 +522,9 @@ app.get(
 );
 
 app.get("/login", (req, res) => {
-  // res.render("login", {});
+  //res.render("login", {});
   //!just to test if it works without the layout argument
+  console.log("login");
   res.render("login");
 });
 
@@ -548,23 +550,22 @@ app.post("/register", (req, res) => {
 
 app.post("/login", (req, res) => {
   req.body.userAgent = req.get("User-Agent");
+  console.log("check login");
 
-  authData
-    .checkUser(req.body)
-    .then((user) => {
+  authData.checkUser(req.body).then((user) => {
       req.session.user = {
         userName: user.userName,
         email: user.email,
         loginHistory: user.loginHistory,
       };
-
       res.redirect("/posts");
-    })
-    .catch((err) => {
-      res.render("login", {
+    }).catch((err) => {
+      console.log("+++++++++++++++++++++++++++++++++++++++++++++");     
+      res.sendStatus(403).render("login", {
         errorMessage: err,
         userName: req.body.userName,
       });
+
     });
 });
 
@@ -573,9 +574,13 @@ app.get("/logout", (req, res) => {
   res.redirect("/");
 });
 
-app.get("userHistory", ensureLogin, (req, res) => {
-  res.render("userHistory", {});
-})
+app.get(
+  "userHistory",
+  ensureLogin,
+  (req, res) => {
+    res.render("userHistory", {});
+  }
+);
 
 app.use((req, res) => {
   // res.status(404).send("404: Page not found");
