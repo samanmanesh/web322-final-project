@@ -372,13 +372,6 @@ app.get(
 );
 
 app.get("/posts/add", ensureLogin, (req, res) => {
-  // res.sendFile(
-  //   path.join(__dirname, "/views/addPost.html")
-  // );
-
-  // res.render("addPost", {
-  //   //  use the default Layout (main.hbs)
-  // });
 
   blogService
     .getCategories()
@@ -503,7 +496,7 @@ app.get(
   }
 );
 
-//probably this route is not needed
+
 app.get(
   "/post/delete/:id",
   ensureLogin,
