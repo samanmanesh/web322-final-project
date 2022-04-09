@@ -26,6 +26,9 @@ const stripJs = require("strip-js");
 
 const authData = require("./auth-service");
 const clientSessions = require("client-sessions");
+const {
+  render,
+} = require("express/lib/response");
 
 app.engine(
   ".hbs",
@@ -102,17 +105,19 @@ app.use(function (req, res, next) {
 });
 
 // Setup client-sessions
-app.use(clientSessions({
-  cookieName: "session", // this is the object name that will be added to 'req'
-  secret: "assignment6_web322", // this should be a long un-guessable string.
-  duration: 2 * 60 * 1000, // duration of the session in milliseconds (2 minutes)
-  activeDuration: 1000 * 60 // the session will be extended by this many ms each request (1 minute)
-}));
+app.use(
+  clientSessions({
+    cookieName: "session", // this is the object name that will be added to 'req'
+    secret: "assignment6_web322", // this should be a long un-guessable string.
+    duration: 2 * 60 * 1000, // duration of the session in milliseconds (2 minutes)
+    activeDuration: 1000 * 60, // the session will be extended by this many ms each request (1 minute)
+  })
+);
 
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   res.locals.session = req.session;
   next();
-  });
+});
 
 // This is a helper middleware function that checks if a user is logged in
 // we can use it in any route that we want to protect against unauthenticated access.
@@ -125,8 +130,6 @@ function ensureLogin(req, res, next) {
     next();
   }
 }
-
-
 
 //Routes
 app.get("/", (req, res) => {
@@ -251,18 +254,24 @@ app.get("/blog", async (req, res) => {
   res.render("blog", { data: viewData });
 });
 
-app.get("/post/:value", ensureLogin, (req, res) => {
-  blogService
-    .getPostById(req.params.value)
-    .then((post) => {
-      res.status(200).send(post);
-    })
-    .catch((err) => {
-      res.sendStatus(500).send({ message: err });
-    });
-});
+app.get(
+  "/post/:value",
+  ensureLogin,
+  (req, res) => {
+    blogService
+      .getPostById(req.params.value)
+      .then((post) => {
+        res.status(200).send(post);
+      })
+      .catch((err) => {
+        res
+          .sendStatus(500)
+          .send({ message: err });
+      });
+  }
+);
 
-app.get("/posts",ensureLogin, (req, res) => {
+app.get("/posts", ensureLogin, (req, res) => {
   const { minDate, category } = req.query;
   if (minDate) {
     blogService
@@ -333,28 +342,32 @@ app.get("/posts",ensureLogin, (req, res) => {
   }
 });
 
-app.get("/categories", ensureLogin, (req, res) => {
-  blogService
-    .getCategories()
-    .then((categories) => {
-      // res.status(200).send(categories);
-      if (categories.length > 0) {
-        res.status(200).render("categories", {
-          categories: categories,
-        });
-      } else {
-        res.render("categories", {
+app.get(
+  "/categories",
+  ensureLogin,
+  (req, res) => {
+    blogService
+      .getCategories()
+      .then((categories) => {
+        // res.status(200).send(categories);
+        if (categories.length > 0) {
+          res.status(200).render("categories", {
+            categories: categories,
+          });
+        } else {
+          res.render("categories", {
+            message: "no results",
+          });
+        }
+      })
+      .catch((err) => {
+        // res.sendStatus(500).send({ message: err });
+        res.sendStatus(500).render("categories", {
           message: "no results",
         });
-      }
-    })
-    .catch((err) => {
-      // res.sendStatus(500).send({ message: err });
-      res.sendStatus(500).render("categories", {
-        message: "no results",
       });
-    });
-});
+  }
+);
 
 app.get("/posts/add", ensureLogin, (req, res) => {
   // res.sendFile(
@@ -425,64 +438,142 @@ app.post(
   }
 );
 
-app.get("/categories/add",ensureLogin, (req, res) => {
-  res.render("addCategory", {
-    //  use the default Layout (main.hbs)
-  });
-});
-
-app.post("/categories/add",ensureLogin, (req, res) => {
-  blogService
-    .addCategory(req.body)
-    .then((category) => {
-      res.redirect("/categories");
-    })
-    .catch((err) => {
-      res.sendStatus(500).send({ message: err });
+app.get(
+  "/categories/add",
+  ensureLogin,
+  (req, res) => {
+    res.render("addCategory", {
+      //  use the default Layout (main.hbs)
     });
+  }
+);
+
+app.post(
+  "/categories/add",
+  ensureLogin,
+  (req, res) => {
+    blogService
+      .addCategory(req.body)
+      .then((category) => {
+        res.redirect("/categories");
+      })
+      .catch((err) => {
+        res
+          .sendStatus(500)
+          .send({ message: err });
+      });
+  }
+);
+
+app.get(
+  "/categories/delete/:id",
+  ensureLogin,
+  (req, res) => {
+    blogService
+      .deleteCategoryById(req.params.id)
+      .then((category) => {
+        res.redirect("/categories");
+      })
+      .catch((err) => {
+        res.sendStatus(500).send({
+          message:
+            "Unable to Remove Category / Category not found)",
+        });
+      });
+  }
+);
+
+app.get(
+  "/posts/delete/:id",
+  ensureLogin,
+  (req, res) => {
+    blogService
+      .deletePostById(req.params.id)
+      .then((post) => {
+        res.redirect("/posts");
+      })
+      .catch((err) => {
+        res.sendStatus(500).send({
+          message:
+            "Unable to Remove Post / Post not found)",
+        });
+      });
+  }
+);
+
+//probably this route is not needed
+app.get(
+  "/post/delete/:id",
+  ensureLogin,
+  (req, res) => {
+    blogService
+      .deletePostById(req.params.id)
+      .then((post) => {
+        res.redirect("/posts");
+      })
+      .catch((err) => {
+        res.sendStatus(500).send({
+          message:
+            "Unable to Remove Post / Post not found)",
+        });
+      });
+  }
+);
+
+app.get("/login", (req, res) => {
+  // res.render("login", {});
+  //!just to test if it works without the layout argument
+  res.render("login");
 });
 
-app.get("/categories/delete/:id",ensureLogin, (req, res) => {
-  blogService
-    .deleteCategoryById(req.params.id)
-    .then((category) => {
-      res.redirect("/categories");
+app.get("/register", (req, res) => {
+  res.render("register", {});
+});
+
+app.post("/register", (req, res) => {
+  authData
+    .registerUser(req.body)
+    .then((user) => {
+      res.render("register", {
+        successMessage: "User created",
+      });
     })
     .catch((err) => {
-      res.sendStatus(500).send({
-        message:
-          "Unable to Remove Category / Category not found)",
+      res.render("register", {
+        errorMessage: err,
+        userName: req.body.userName,
       });
     });
 });
 
-app.get("/posts/delete/:id",ensureLogin, (req, res) => {
-  blogService
-    .deletePostById(req.params.id)
-    .then((post) => {
+app.post("/login", (req, res) => {
+  req.body.userAgent = req.get("User-Agent");
+
+  authData
+    .checkUser(req.body)
+    .then((user) => {
+      req.session.user = {
+        userName: user.userName,
+        email: user.email,
+        loginHistory: user.loginHistory,
+      };
+
       res.redirect("/posts");
     })
     .catch((err) => {
-      res.sendStatus(500).send({
-        message:
-          "Unable to Remove Post / Post not found)",
+      res.render("login", {
+        errorMessage: err,
+        userName: req.body.userName,
       });
     });
 });
 
-app.get("/post/delete/:id",ensureLogin, (req, res) => {
-  blogService
-    .deletePostById(req.params.id)
-    .then((post) => {
-      res.redirect("/posts");
-    })
-    .catch((err) => {
-      res.sendStatus(500).send({
-        message:
-          "Unable to Remove Post / Post not found)",
-      });
-    });
+app.get("/logout", (req, res) => {
+  req.session.reset();
+  res.redirect("/");
 });
+
+
 
 app.use((req, res) => {
   // res.status(404).send("404: Page not found");
