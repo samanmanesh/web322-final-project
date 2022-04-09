@@ -524,9 +524,6 @@ app.get(
 
 app.get("/login", (req, res) => {
   res.render("login", {});
-  //!just to test if it works without the layout argument
-  //console.log("login");
-  // res.render("login");
 });
 
 app.get("/register", (req, res) => {
@@ -551,23 +548,24 @@ app.post("/register", (req, res) => {
 
 app.post("/login", (req, res) => {
   req.body.userAgent = req.get("User-Agent");
-  
+
   authData
     .checkUser(req.body)
     .then((user) => {
-    
       req.session.user = {
         userName: user.userName,
         email: user.email,
         loginHistory: user.loginHistory,
       };
-    
+
       res.redirect("/posts");
     })
     .catch((err) => {
       console.log("hit the catch", err);
-      res.render("login", {errorMessage: err, userName: req.body.userName});
-
+      res.render("login", {
+        errorMessage: err,
+        userName: req.body.userName,
+      });
     });
 });
 
@@ -585,7 +583,6 @@ app.get(
 );
 
 app.use((req, res) => {
-  // res.status(404).send("404: Page not found");
   res.status(404).render("404", {
     message: "404: Page not found",
   });

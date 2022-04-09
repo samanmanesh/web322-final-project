@@ -4,7 +4,6 @@ var Schema = mongoose.Schema;
 
 const bcrypt = require("bcryptjs");
 
-// connect to Your MongoDB Atlas Database
 //mongoose.connect("mongodb+srv://SamanManesh:mongoPassword1@cluster0.goouk.mongodb.net/web322-assignment6?retryWrites=true&w=majority");
 
 let userSchema = new Schema({
@@ -64,7 +63,6 @@ module.exports.registerUser = (userData) => {
       .then((hash) => {
         // Hash the password using a Salt that was generated using 10 rounds
         // TODO: Store the resulting "hash" value in the DB
-
         console.log("hash", hash);
         userData.password = hash;
 
@@ -107,147 +105,57 @@ module.exports.checkUser = (userData) => {
     User.find(
       { userName: userData.userName },
       (err, users) => {
-        console.log("users", users);
-
         if (err) {
-          console.log("problem is in err", err);
           reject(
             `Unable to find user: ${userData.userName}`
           );
         }
         if (users.length === 0) {
-          console.log(
-            "problem is in users length check",
-            users.length
-          );
           reject(
             `Unable to find user: ${userData.userName}`
           );
         }
-        console.log("users2", users);
-        if (
-          users.length > 0 &&
-          users[0].password !== userData.password
-        ) {
-          console.log(
-            "problem is in password check",
-            users[0].password
-          );
-          reject(
-            "Incorrect Password for user: " +
-              userData.userName
-          );
-        }
 
-        if (
-          users.length > 0 &&
-          users[0].userName ===
-            userData.userName &&
-          users[0].password === userData.password
-        ) {
-          console.log(
-            "problem is in userName check for update",
-            users[0].userName
-          );
-          users[0].loginHistory.push({
-            dateTime: new Date().toString(),
-            userAgent: userData.userAgent,
-          });
+        if (users.length > 0) {
+          bcrypt
+            .compare(
+              userData.password,
+              users[0].password
+            )
+            .then((result) => {
+              // result === true if it matches and result === false if it does not match
+              if (result) {
+                users[0].loginHistory.push({
+                  dateTime: new Date().toString(),
+                  userAgent: userData.userAgent,
+                });
 
-          User.update(
-            { userName: users[0].userName },
-            {
-              $set: {
-                loginHistory:
-                  users[0].loginHistory,
-              },
-            },
-            (err, data) => {
-              console.log(
-                " problem is when updating data",
-                data
-              );
-              if (err) {
+                User.update(
+                  { userName: users[0].userName },
+                  {
+                    $set: {
+                      loginHistory:
+                        users[0].loginHistory,
+                    },
+                  },
+                  (err, data) => {
+                    if (err) {
+                      reject(
+                        `Unable to update user: ${userData.userName}`
+                      );
+                    }
+                  }
+                );
+                resolve(users[0]);
+              } else {
                 reject(
-                  `Unable to update user: ${userData.userName}`
+                  "Incorrect Password for user: " +
+                    userData.userName
                 );
               }
-            }
-          );
-          console.log(
-            "problem is when it returns resolve[0]",
-            users[0]
-          );
-          resolve(users[0]);
+            });
         }
       }
     );
   });
 };
-
-//     User.find({ userName: userData.userName })
-//       .exec()
-//       .then((users) => {
-
-//         console.log("users check", users);
-
-//         if (!users) {
-//           console.log("no users1");
-//           reject(
-//             `Unable to find user: ${userData.userName}`
-//           );
-//         }
-
-//         if (!users) {
-//           console.log("no users2", users);
-//           reject(
-//             `Unable to find user: ${userData.userName}`
-//           );
-//         }
-
-//         if (
-//           users[0].password !== userData.password
-//         ) {
-//           reject(
-//             "Incorrect Password for user: " +
-//               userData.userName
-//           );
-//         }
-
-//         if (
-//           users[0].userName ===
-//             userData.userName &&
-//           users[0].password === userData.password
-//         ) {
-//           users[0].loginHistory.push({
-//             dateTime: new Date().toString(),
-//             userAgent: userData.userAgent,
-//           });
-
-//           User.update(
-//             { userName: users[0].userName },
-//             {
-//               $set: {
-//                 loginHistory:
-//                   users[0].loginHistory,
-//               },
-//             }
-//               .exec()
-//               .then((result) => {
-//                 resolve(users[0]);
-//               })
-//               .catch((err) => {
-//                 `There was an error verifying the user: ${err}`;
-//               })
-//           );
-//         }
-//       })
-//       .catch((err) => {
-//         console.log("hit here");
-//         reject(
-//           "Unable to find user2: " +
-//             userData.userName
-//         );
-//       });
-//   });
-// };
