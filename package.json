@@ -11,9 +11,11 @@
   "author": "Mohammadhossein Sobhanmanesh",
   "license": "ISC",
   "dependencies": {
+    "client-sessions": "^0.8.0",
     "cloudinary": "^1.28.1",
     "express": "^4.17.2",
     "express-handlebars": "^6.0.3",
+    "mongoose": "^6.2.10",
     "multer": "^1.4.4",
     "pg": "^8.7.3",
     "pg-hstore": "^2.3.4",

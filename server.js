@@ -1,10 +1,10 @@
 /*********************************************************************************
- * WEB322 – Assignment 05
+ * WEB322 – Assignment 06
  * I declare that this assignment is my own work in accordance with Seneca Academic Policy. No part
  * of this assignment has been copied manually or electronically from any other source
  * (including 3rd party web sites) or distributed to other students.
  *
- * Name: __Mohammadhossein Sobhanmanesh__ Student ID: __116523200__ Date: __2022-03-26__
+ * Name: __Mohammadhossein Sobhanmanesh__ Student ID: __116523200__ Date: __2022-04-08__
  *
  * Online (Heroku) Link: https://ancient-dusk-67003.herokuapp.com/blog
  *
@@ -23,6 +23,9 @@ const streamifier = require("streamifier");
 const exphbs = require("express-handlebars");
 
 const stripJs = require("strip-js");
+
+const authData = require("./auth-service");
+const clientSessions = require("client-sessions");
 
 app.engine(
   ".hbs",
@@ -97,6 +100,33 @@ app.use(function (req, res, next) {
   app.locals.viewingCategory = req.query.category;
   next();
 });
+
+// Setup client-sessions
+app.use(clientSessions({
+  cookieName: "session", // this is the object name that will be added to 'req'
+  secret: "assignment6_web322", // this should be a long un-guessable string.
+  duration: 2 * 60 * 1000, // duration of the session in milliseconds (2 minutes)
+  activeDuration: 1000 * 60 // the session will be extended by this many ms each request (1 minute)
+}));
+
+app.use(function(req, res, next) {
+  res.locals.session = req.session;
+  next();
+  });
+
+// This is a helper middleware function that checks if a user is logged in
+// we can use it in any route that we want to protect against unauthenticated access.
+// A more advanced version of this would include checks for authorization as well after
+// checking if the user is authenticated
+function ensureLogin(req, res, next) {
+  if (!req.session.user) {
+    res.redirect("/login");
+  } else {
+    next();
+  }
+}
+
+
 
 //Routes
 app.get("/", (req, res) => {
@@ -221,7 +251,7 @@ app.get("/blog", async (req, res) => {
   res.render("blog", { data: viewData });
 });
 
-app.get("/post/:value", (req, res) => {
+app.get("/post/:value", ensureLogin, (req, res) => {
   blogService
     .getPostById(req.params.value)
     .then((post) => {
@@ -232,7 +262,7 @@ app.get("/post/:value", (req, res) => {
     });
 });
 
-app.get("/posts", (req, res) => {
+app.get("/posts",ensureLogin, (req, res) => {
   const { minDate, category } = req.query;
   if (minDate) {
     blogService
@@ -303,7 +333,7 @@ app.get("/posts", (req, res) => {
   }
 });
 
-app.get("/categories", (req, res) => {
+app.get("/categories", ensureLogin, (req, res) => {
   blogService
     .getCategories()
     .then((categories) => {
@@ -326,7 +356,7 @@ app.get("/categories", (req, res) => {
     });
 });
 
-app.get("/posts/add", (req, res) => {
+app.get("/posts/add", ensureLogin, (req, res) => {
   // res.sendFile(
   //   path.join(__dirname, "/views/addPost.html")
   // );
@@ -352,6 +382,7 @@ app.get("/posts/add", (req, res) => {
 
 app.post(
   "/posts/add",
+  ensureLogin,
   upload.single("featureImage"),
   (req, res) => {
     if (req.file) {
@@ -394,13 +425,13 @@ app.post(
   }
 );
 
-app.get("/categories/add", (req, res) => {
+app.get("/categories/add",ensureLogin, (req, res) => {
   res.render("addCategory", {
     //  use the default Layout (main.hbs)
   });
 });
 
-app.post("/categories/add", (req, res) => {
+app.post("/categories/add",ensureLogin, (req, res) => {
   blogService
     .addCategory(req.body)
     .then((category) => {
@@ -411,7 +442,7 @@ app.post("/categories/add", (req, res) => {
     });
 });
 
-app.get("/categories/delete/:id", (req, res) => {
+app.get("/categories/delete/:id",ensureLogin, (req, res) => {
   blogService
     .deleteCategoryById(req.params.id)
     .then((category) => {
@@ -425,7 +456,7 @@ app.get("/categories/delete/:id", (req, res) => {
     });
 });
 
-app.get("/posts/delete/:id", (req, res) => {
+app.get("/posts/delete/:id",ensureLogin, (req, res) => {
   blogService
     .deletePostById(req.params.id)
     .then((post) => {
@@ -439,7 +470,7 @@ app.get("/posts/delete/:id", (req, res) => {
     });
 });
 
-app.get("/post/delete/:id", (req, res) => {
+app.get("/post/delete/:id",ensureLogin, (req, res) => {
   blogService
     .deletePostById(req.params.id)
     .then((post) => {
@@ -462,6 +493,7 @@ app.use((req, res) => {
 
 blogService
   .initialize()
+  .then(authData.initialize)
   .then(() => {
     app.listen(HTTP_PORT, () => {
       console.log(
