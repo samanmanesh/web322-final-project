@@ -522,10 +522,10 @@ app.get(
 );
 
 app.get("/login", (req, res) => {
-  //res.render("login", {});
+  res.render("login", {});
   //!just to test if it works without the layout argument
   console.log("login");
-  res.render("login");
+  // res.render("login");
 });
 
 app.get("/register", (req, res) => {
@@ -550,21 +550,22 @@ app.post("/register", (req, res) => {
 
 app.post("/login", (req, res) => {
   req.body.userAgent = req.get("User-Agent");
-  console.log("check login");
-
-  authData.checkUser(req.body).then((user) => {
+  
+  authData
+    .checkUser(req.body)
+    .then((user) => {
+    
       req.session.user = {
         userName: user.userName,
         email: user.email,
         loginHistory: user.loginHistory,
       };
+    
       res.redirect("/posts");
-    }).catch((err) => {
-      console.log("+++++++++++++++++++++++++++++++++++++++++++++");     
-      res.sendStatus(403).render("login", {
-        errorMessage: err,
-        userName: req.body.userName,
-      });
+    })
+    .catch((err) => {
+  
+      res.render("login", {errorMessage: err, userName: req.body.userName});
 
     });
 });

@@ -71,50 +71,46 @@ module.exports.registerUser = (userData) => {
 };
 
 module.exports.checkUser = (userData) => {
-  console.log("check" ,userData);
+  console.log("check", userData);
+
   return new Promise((resolve, reject) => {
     if (
       !userData.userName ||
       !userData.password
     ) {
-      
       reject("missing username or password");
     }
 
-
-    User.find(
-      { userName: userData.userName },
-      (err, users) => {
-        if (err) {
-          console.log("check 2");
-          reject(`Unable to find user: ${userData.userName}`);
-          
+    User.find({ userName: userData.userName })
+      .exec()
+      .then((users) => {
+        if (!users) {
+          reject(
+            `Unable to find user: ${userData.userName}`
+          );
         }
-          console.log("users", users);
+
         if (users.length === 0) {
-          
-          console.log("check 3");
-          reject(`Unable to find user: ${userData.userName}`);
-          
-          console.log("check 12");
+          console.log("no users", users);
+          reject(
+            `Unable to find user: ${userData.userName}`
+          );
         }
 
         if (
           users[0].password !== userData.password
         ) {
-          console.log("check 4");
           reject(
             "Incorrect Password for user: " +
               userData.userName
           );
         }
+
         if (
           users[0].userName ===
             userData.userName &&
           users[0].password === userData.password
         ) {
-          console.log("check 13");
-
           users[0].loginHistory.push({
             dateTime: new Date().toString(),
             userAgent: userData.userAgent,
@@ -127,22 +123,24 @@ module.exports.checkUser = (userData) => {
                 loginHistory:
                   users[0].loginHistory,
               },
-            },
-            (err, users) => {
-              if (err) {
-                console.log("check 5");
-                reject(
-                  `There was an error verifying the user: ${err}`
-                );
-              }
-              resolve(users[0]);
             }
+              .exec()
+              .then((result) => {
+                resolve(users[0]);
+              })
+              .catch((err) => {
+                `There was an error verifying the user: ${err}`;
+              })
           );
-          console.log("check 6");
         }
-      }
-    );
-    console.log("check 7");
+      })
+      .catch((err) => {
+        console.log("hit here");
+        reject(
+          "Unable to find user: " +
+            userData.userName
+        );
+      });
   });
-
 };
+
