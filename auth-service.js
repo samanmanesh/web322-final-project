@@ -39,10 +39,13 @@ module.exports.initialize = function () {
 module.exports.registerUser = (userData) => {
   //userData is an object with the following properties:
   //.userName, .userAgent, .email, .password, .password2
+  console.log("register", userData);
+
   return new Promise((resolve, reject) => {
     if (
-      !userData.username ||
+      !userData.userName ||
       !userData.password ||
+      !userData.password2 ||
       !userData.email
     ) {
       reject(
@@ -55,6 +58,7 @@ module.exports.registerUser = (userData) => {
       reject("Passwords do not match");
     }
     let newUser = new User(userData);
+
     newUser.save((err, users) => {
       if (err && err.code === 11000) {
         // dubplicate key error
@@ -81,22 +85,21 @@ module.exports.checkUser = (userData) => {
       reject("missing username or password");
     }
 
-    User.find({ userName: userData.userName })
-      .exec()
-      .then((users) => {
-        if (!users) {
+    User.find(
+      { userName: userData.userName },
+      (err, users) => {
+        console.log("users", users);
+
+        if (err) {
           reject(
             `Unable to find user: ${userData.userName}`
           );
         }
-
         if (users.length === 0) {
-          console.log("no users", users);
           reject(
             `Unable to find user: ${userData.userName}`
           );
         }
-
         if (
           users[0].password !== userData.password
         ) {
@@ -123,24 +126,85 @@ module.exports.checkUser = (userData) => {
                 loginHistory:
                   users[0].loginHistory,
               },
+            },
+            (err, data) => {
+              if (err) {
+                reject(
+                  `Unable to update user: ${userData.userName}`
+                );
+              }
             }
-              .exec()
-              .then((result) => {
-                resolve(users[0]);
-              })
-              .catch((err) => {
-                `There was an error verifying the user: ${err}`;
-              })
           );
+          resolve(users[0]);
         }
-      })
-      .catch((err) => {
-        console.log("hit here");
-        reject(
-          "Unable to find user: " +
-            userData.userName
-        );
-      });
+      }
+    );
   });
 };
 
+//     User.find({ userName: userData.userName })
+//       .exec()
+//       .then((users) => {
+
+//         console.log("users check", users);
+
+//         if (!users) {
+//           console.log("no users1");
+//           reject(
+//             `Unable to find user: ${userData.userName}`
+//           );
+//         }
+
+//         if (!users) {
+//           console.log("no users2", users);
+//           reject(
+//             `Unable to find user: ${userData.userName}`
+//           );
+//         }
+
+//         if (
+//           users[0].password !== userData.password
+//         ) {
+//           reject(
+//             "Incorrect Password for user: " +
+//               userData.userName
+//           );
+//         }
+
+//         if (
+//           users[0].userName ===
+//             userData.userName &&
+//           users[0].password === userData.password
+//         ) {
+//           users[0].loginHistory.push({
+//             dateTime: new Date().toString(),
+//             userAgent: userData.userAgent,
+//           });
+
+//           User.update(
+//             { userName: users[0].userName },
+//             {
+//               $set: {
+//                 loginHistory:
+//                   users[0].loginHistory,
+//               },
+//             }
+//               .exec()
+//               .then((result) => {
+//                 resolve(users[0]);
+//               })
+//               .catch((err) => {
+//                 `There was an error verifying the user: ${err}`;
+//               })
+//           );
+//         }
+//       })
+//       .catch((err) => {
+//         console.log("hit here");
+//         reject(
+//           "Unable to find user2: " +
+//             userData.userName
+//         );
+//       });
+//   });
+// };
