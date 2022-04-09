@@ -2,6 +2,8 @@
 var mongoose = require("mongoose");
 var Schema = mongoose.Schema;
 
+const bcrypt = require('bcryptjs');
+
 // connect to Your MongoDB Atlas Database
 //mongoose.connect("mongodb+srv://SamanManesh:mongoPassword1@cluster0.goouk.mongodb.net/web322-assignment6?retryWrites=true&w=majority");
 
@@ -91,18 +93,24 @@ module.exports.checkUser = (userData) => {
         console.log("users", users);
 
         if (err) {
+          console.log("problem is in err", err);
           reject(
             `Unable to find user: ${userData.userName}`
           );
         }
         if (users.length === 0) {
+          console.log("problem is in users length check", users.length);
           reject(
             `Unable to find user: ${userData.userName}`
           );
+          
         }
+        console.log("users2", users);
         if (
+          users.length > 0 &&
           users[0].password !== userData.password
         ) {
+          console.log("problem is in password check", users[0].password);
           reject(
             "Incorrect Password for user: " +
               userData.userName
@@ -110,10 +118,12 @@ module.exports.checkUser = (userData) => {
         }
 
         if (
+          users.length > 0 &&
           users[0].userName ===
             userData.userName &&
           users[0].password === userData.password
         ) {
+          console.log("problem is in userName check for update", users[0].userName);
           users[0].loginHistory.push({
             dateTime: new Date().toString(),
             userAgent: userData.userAgent,
@@ -128,6 +138,7 @@ module.exports.checkUser = (userData) => {
               },
             },
             (err, data) => {
+              console.log(" problem is when updating data", data);
               if (err) {
                 reject(
                   `Unable to update user: ${userData.userName}`
@@ -135,6 +146,7 @@ module.exports.checkUser = (userData) => {
               }
             }
           );
+          console.log("problem is when it returns resolve[0]", users[0]);
           resolve(users[0]);
         }
       }

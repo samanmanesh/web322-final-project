@@ -30,6 +30,7 @@ const {
   render,
 } = require("express/lib/response");
 const res = require("express/lib/response");
+const console = require("console");
 
 app.engine(
   ".hbs",
@@ -524,7 +525,7 @@ app.get(
 app.get("/login", (req, res) => {
   res.render("login", {});
   //!just to test if it works without the layout argument
-  console.log("login");
+  //console.log("login");
   // res.render("login");
 });
 
@@ -564,7 +565,7 @@ app.post("/login", (req, res) => {
       res.redirect("/posts");
     })
     .catch((err) => {
-  
+      console.log("hit the catch", err);
       res.render("login", {errorMessage: err, userName: req.body.userName});
 
     });
